@@ -407,6 +407,8 @@ func (act *actionInstallPreOrderedPlugins) installPreOrderedPluginV2(std *nodeUt
 				Version:                 version,
 				IsOffline:               deployInfo.InstallOptions.IsOffline,
 				EnableCompatibilityMode: deployInfo.InstallOptions.EnableCompatibilityMode,
+				// Installing pre-installed plugins follows a brand new installation process, eliminating the need to restore sub config.
+				RenewSubConfig: true,
 			}
 
 			return nil
