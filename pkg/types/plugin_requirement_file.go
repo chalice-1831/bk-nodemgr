@@ -21,12 +21,44 @@ package types
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"strings"
 	"time"
 	"unicode"
 
 	"github.com/TencentBlueKing/bk-nodemgr/pkg/runtime/criteria"
+	"github.com/google/uuid"
 )
+
+// PluginRequirement declares a file dependency and its destination inside the plugin directory.
+type PluginRequirement struct {
+	RequirementFileID string
+	TargetDir         string
+	TargetFileName    string
+}
+
+// Validate checks the file reference and the portable destination components.
+func (requirement PluginRequirement) Validate() error {
+	if err := uuid.Validate(requirement.RequirementFileID); err != nil {
+		return fmt.Errorf("invalid requirement_file_id: %w", err)
+	}
+	if err := ValidatePluginRequirementFileName(requirement.TargetFileName); err != nil {
+		return fmt.Errorf("invalid target_file_name: %w", err)
+	}
+	if !fs.ValidPath(requirement.TargetDir) {
+		return errors.New("target_dir must be a slash-separated path relative to the plugin directory")
+	}
+	if requirement.TargetDir == "." {
+		return nil
+	}
+	for component := range strings.SplitSeq(requirement.TargetDir, "/") {
+		if err := ValidatePluginRequirementFileName(component); err != nil {
+			return fmt.Errorf("invalid target_dir component %q: %w", component, err)
+		}
+	}
+
+	return nil
+}
 
 // PluginRequirementFileRecord stores the latest metadata of an independent requirement file.
 type PluginRequirementFileRecord struct {

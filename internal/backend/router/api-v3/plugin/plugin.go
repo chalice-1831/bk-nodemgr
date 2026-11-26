@@ -82,6 +82,8 @@ func Load(rg *gin.RouterGroup, capability *options.Capability) {
 	h.rg.POST("/apply_subconfig", restserver.Handler(h.ApplySubConfig))
 	h.rg.POST("/remove_subconfig", restserver.Handler(h.RemoveSubConfig))
 	h.rg.POST("/set_memo", restserver.Handler(h.SetMemo))
+	h.rg.POST("/get_requirements", restserver.Handler(h.GetRequirements))
+	h.rg.POST("/set_requirements", restserver.Handler(h.SetRequirements))
 	h.rg.POST("/list_config_files", restserver.Handler(h.ListConfigFiles))
 
 	h.rg.POST("/requirement/create", restserver.Handler(h.CreateRequirementFile))

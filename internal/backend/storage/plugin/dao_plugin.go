@@ -199,6 +199,18 @@ func (s *Storage) setPluginMemo(nCtx contextx.IContext, pluginName string, memo 
 	return nil
 }
 
+func (s *Storage) setPluginRequirements(nCtx contextx.IContext, pluginName string, requirements []types.PluginRequirement) error {
+	if nCtx == nil {
+		return base.ErrInvalidContext()
+	}
+
+	if err := s.daoPlugin.UpdateRequirements(nCtx, pluginName, requirements); err != nil {
+		return fmt.Errorf("failed to set plugin requirements: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Storage) upsertManyPlugins(nCtx contextx.IContext, plugins ...*types.Plugin) error {
 	if nCtx == nil {
 		return base.ErrInvalidContext()

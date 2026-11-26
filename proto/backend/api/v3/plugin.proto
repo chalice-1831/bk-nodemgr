@@ -302,6 +302,50 @@ message PluginSetMemoResp {
   Permission permission = 6;
 }
 
+// 插件声明的依赖文件及其部署位置。
+message PluginRequirementDeclaration {
+  // File 服务返回的依赖文件 UUID。
+  string requirement_file_id = 1;
+  // 相对插件部署目录的目标目录，使用 / 分隔，. 表示插件部署目录。
+  string target_dir = 2;
+  // 文件下发到目标目录时使用的文件名。
+  string target_file_name = 3;
+}
+
+// 查询当前租户中指定插件的依赖声明。
+message PluginGetRequirementsReq { string plugin_name = 1; }
+
+// 插件当前的依赖声明。
+message PluginGetRequirementsResp {
+  int32 code = 1;
+  string message = 2;
+  string request_id = 3;
+  Error error = 4;
+  Permission permission = 6;
+
+  message Data {
+    // 插件没有声明依赖文件时返回空数组。
+    repeated PluginRequirementDeclaration requirements = 1;
+  }
+  Data data = 5;
+}
+
+// 整体替换当前租户中指定插件的依赖声明。
+message PluginSetRequirementsReq {
+  string plugin_name = 1;
+  // 必须提供数组。空数组清空声明，引用的文件必须属于指定插件。
+  repeated PluginRequirementDeclaration requirements = 2;
+}
+
+// 插件依赖声明替换的结果。
+message PluginSetRequirementsResp {
+  int32 code = 1;
+  string message = 2;
+  string request_id = 3;
+  Error error = 4;
+  Permission permission = 6;
+}
+
 // PluginRestartReq describes the plugin restart request.
 message PluginRestartReq {
   message RestartInfo {
@@ -551,6 +595,24 @@ service Plugin {
   rpc SetPluginMemo(PluginSetMemoReq) returns (PluginSetMemoResp) {
     option (google.api.http) = {
       post : "/api/v3/plugin/set_memo"
+      body : "*"
+    };
+  }
+
+  // 查询指定插件声明的依赖文件及其部署位置。
+  rpc GetPluginRequirements(PluginGetRequirementsReq)
+      returns (PluginGetRequirementsResp) {
+    option (google.api.http) = {
+      post : "/api/v3/plugin/get_requirements"
+      body : "*"
+    };
+  }
+
+  // 整体替换指定插件的依赖声明，传入空数组可清空声明。
+  rpc SetPluginRequirements(PluginSetRequirementsReq)
+      returns (PluginSetRequirementsResp) {
+    option (google.api.http) = {
+      post : "/api/v3/plugin/set_requirements"
       body : "*"
     };
   }

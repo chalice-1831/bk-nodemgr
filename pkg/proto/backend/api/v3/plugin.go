@@ -21,6 +21,8 @@ package v3
 import (
 	"errors"
 	"fmt"
+	"path"
+	"strings"
 
 	"github.com/TencentBlueKing/bk-nodemgr/pkg/runtime/conv"
 
@@ -850,6 +852,71 @@ func (x *PluginSetMemoReq) Validate() error {
 
 // AutoConvert auto convert.
 func (x *PluginSetMemoReq) AutoConvert() {}
+
+// Validate checks the plugin name before querying declarations.
+func (x *PluginGetRequirementsReq) Validate() error {
+	if strings.TrimSpace(x.GetPluginName()) == "" {
+		return errors.New("plugin_name cannot be empty")
+	}
+
+	return nil
+}
+
+// AutoConvert preserves the supplied plugin name.
+func (x *PluginGetRequirementsReq) AutoConvert() {}
+
+// Validate checks the complete replacement and rejects colliding destinations.
+func (x *PluginSetRequirementsReq) Validate() error {
+	if strings.TrimSpace(x.GetPluginName()) == "" {
+		return errors.New("plugin_name cannot be empty")
+	}
+	if x.GetRequirements() == nil {
+		return errors.New("requirements must be an explicit array")
+	}
+
+	destinations := make(map[string]struct{}, len(x.GetRequirements()))
+	for index, requirement := range x.ConvertRequirementsToTypes() {
+		if err := requirement.Validate(); err != nil {
+			return fmt.Errorf("requirements[%d]: %w", index, err)
+		}
+		destination := path.Join(requirement.TargetDir, requirement.TargetFileName)
+		// Windows plugin deployments can use a case-insensitive filesystem.
+		destinationKey := strings.ToLower(destination)
+		if _, exists := destinations[destinationKey]; exists {
+			return fmt.Errorf("duplicate plugin requirement destination %q", destination)
+		}
+		destinations[destinationKey] = struct{}{}
+	}
+
+	return nil
+}
+
+// AutoConvert preserves the difference between an omitted and an empty array.
+func (x *PluginSetRequirementsReq) AutoConvert() {}
+
+// ConvertRequirementsToTypes converts file references and deployment destinations.
+func (x *PluginSetRequirementsReq) ConvertRequirementsToTypes() []types.PluginRequirement {
+	return conv.SliceToSlice(x.GetRequirements(), func(requirement *PluginRequirementDeclaration) types.PluginRequirement {
+		return types.PluginRequirement{
+			RequirementFileID: requirement.GetRequirementFileId(),
+			TargetDir:         requirement.GetTargetDir(),
+			TargetFileName:    requirement.GetTargetFileName(),
+		}
+	})
+}
+
+// ConvertRequirementsFromTypes prepares declarations for the API response.
+func (x *PluginGetRequirementsResp) ConvertRequirementsFromTypes(requirements []types.PluginRequirement) {
+	x.Data = &PluginGetRequirementsResp_Data{
+		Requirements: conv.SliceToSlice(requirements, func(requirement types.PluginRequirement) *PluginRequirementDeclaration {
+			return &PluginRequirementDeclaration{
+				RequirementFileId: requirement.RequirementFileID,
+				TargetDir:         requirement.TargetDir,
+				TargetFileName:    requirement.TargetFileName,
+			}
+		}),
+	}
+}
 
 // Validate check body.
 func (x *PluginStartReq) Validate() error {

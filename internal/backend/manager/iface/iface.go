@@ -69,6 +69,9 @@ type iNodeManagerWorkflow interface {
 
 // IPluginManager defines the PluginManager interface.
 type IPluginManager interface {
+	// SetPluginRequirements validates file ownership and replaces the plugin's dependency declarations.
+	SetPluginRequirements(nCtx contextx.IContext, pluginName string, requirements []types.PluginRequirement) error
+
 	// LaunchRetryPluginOperationFromLastInstance launch a task to retry operation from last instance.
 	LaunchRetryPluginOperationFromLastInstance(nCtx contextx.IContext, param types.RetryPluginWorkflowOperationParam) error
 

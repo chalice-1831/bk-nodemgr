@@ -53,6 +53,9 @@ type IHandler interface {
 	// UpdateMemo update plugin memo by name.
 	UpdateMemo(nCtx contextx.IContext, pluginName string, memo string) error
 
+	// UpdateRequirements replaces the requirements of an existing plugin.
+	UpdateRequirements(nCtx contextx.IContext, pluginName string, requirements []types.PluginRequirement) error
+
 	// UpsertMany upsert many plugins.
 	UpsertMany(nCtx contextx.IContext, plugins ...*types.Plugin) error
 }
@@ -235,6 +238,25 @@ func (h *Handler) UpdateMemo(nCtx contextx.IContext, pluginName string, memo str
 	return nil
 }
 
+// UpdateRequirements replaces the requirements of an existing plugin.
+func (h *Handler) UpdateRequirements(nCtx contextx.IContext, pluginName string, requirements []types.PluginRequirement) error {
+	if err := nCtx.CheckTenantID(); err != nil {
+		return err
+	}
+	if pluginName == "" {
+		return fmt.Errorf("plugin name is empty")
+	}
+
+	documents := conv.SliceToSlice(requirements, func(requirement types.PluginRequirement) pluginRequirement {
+		return pluginRequirement(requirement)
+	})
+	if err := h.tenantDao(nCtx.TenantID()).updateRequirements(nCtx, pluginName, documents); err != nil {
+		return fmt.Errorf("failed to update plugin requirements, plugin-name(%s): %w", pluginName, err)
+	}
+
+	return nil
+}
+
 // UpsertMany upsert many plugins.
 func (h *Handler) UpsertMany(nCtx contextx.IContext, plugins ...*types.Plugin) error {
 	if err := nCtx.CheckTenantID(); err != nil {
@@ -258,6 +280,9 @@ func convertPluginToTypes(data *Plugin) *types.Plugin {
 		PkgName:       data.PkgName,
 		Memo:          data.Memo,
 		VisibleBizIDs: data.VisibleBizIDs,
+		Requirements: conv.SliceToSlice(data.Requirements, func(requirement pluginRequirement) types.PluginRequirement {
+			return types.PluginRequirement(requirement)
+		}),
 	}
 
 	return plugin

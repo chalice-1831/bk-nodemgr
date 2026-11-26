@@ -35,6 +35,10 @@ type Plugin struct {
 	// VisibleBizIDs is the list of business IDs that the plugin is visible to. This is used for permission control and UI filtering.
 	// An empty list means the plugin is visible to all business IDs.
 	VisibleBizIDs []int64
+
+	// Requirements declares the dependency files and deployment destinations for this plugin.
+	// An empty list means the plugin has no dependency declarations.
+	Requirements []PluginRequirement
 }
 
 // PermittedOperation defines the plugin permitted operation type.

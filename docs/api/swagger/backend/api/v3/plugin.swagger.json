@@ -119,6 +119,39 @@
         ]
       }
     },
+    "/api/v3/plugin/get_requirements": {
+      "post": {
+        "summary": "查询指定插件声明的依赖文件及其部署位置。",
+        "operationId": "Plugin_GetPluginRequirements",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v3PluginGetRequirementsResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v3PluginGetRequirementsReq"
+            }
+          }
+        ],
+        "tags": [
+          "Plugin"
+        ]
+      }
+    },
     "/api/v3/plugin/install": {
       "post": {
         "summary": "在指定主机上批量安装插件。",
@@ -383,6 +416,39 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v3PluginSetMemoReq"
+            }
+          }
+        ],
+        "tags": [
+          "Plugin"
+        ]
+      }
+    },
+    "/api/v3/plugin/set_requirements": {
+      "post": {
+        "summary": "整体替换指定插件的依赖声明，传入空数组可清空声明。",
+        "operationId": "Plugin_SetPluginRequirements",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v3PluginSetRequirementsResp"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v3PluginSetRequirementsReq"
             }
           }
         ],
@@ -1125,6 +1191,53 @@
         }
       }
     },
+    "v3PluginGetRequirementsReq": {
+      "type": "object",
+      "properties": {
+        "plugin_name": {
+          "type": "string"
+        }
+      },
+      "title": "查询当前租户中指定插件的依赖声明。"
+    },
+    "v3PluginGetRequirementsResp": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "error": {
+          "$ref": "#/definitions/v3Error"
+        },
+        "permission": {
+          "$ref": "#/definitions/v3Permission"
+        },
+        "data": {
+          "$ref": "#/definitions/v3PluginGetRequirementsRespData"
+        }
+      },
+      "title": "插件当前的依赖声明。"
+    },
+    "v3PluginGetRequirementsRespData": {
+      "type": "object",
+      "properties": {
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v3PluginRequirementDeclaration"
+          },
+          "title": "插件没有声明依赖文件时返回空数组。"
+        }
+      }
+    },
     "v3PluginInstallNoStartReq": {
       "type": "object",
       "properties": {
@@ -1493,6 +1606,24 @@
         }
       }
     },
+    "v3PluginRequirementDeclaration": {
+      "type": "object",
+      "properties": {
+        "requirement_file_id": {
+          "type": "string",
+          "title": "File 服务返回的依赖文件 UUID。"
+        },
+        "target_dir": {
+          "type": "string",
+          "title": "相对插件部署目录的目标目录，使用 / 分隔，. 表示插件部署目录。"
+        },
+        "target_file_name": {
+          "type": "string",
+          "title": "文件下发到目标目录时使用的文件名。"
+        }
+      },
+      "title": "插件声明的依赖文件及其部署位置。"
+    },
     "v3PluginRestartReq": {
       "type": "object",
       "properties": {
@@ -1572,6 +1703,45 @@
         }
       },
       "description": "PluginSetMemoResp describes the plugin set memo response."
+    },
+    "v3PluginSetRequirementsReq": {
+      "type": "object",
+      "properties": {
+        "plugin_name": {
+          "type": "string"
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v3PluginRequirementDeclaration"
+          },
+          "title": "必须提供数组。空数组清空声明，引用的文件必须属于指定插件。"
+        }
+      },
+      "title": "整体替换当前租户中指定插件的依赖声明。"
+    },
+    "v3PluginSetRequirementsResp": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "error": {
+          "$ref": "#/definitions/v3Error"
+        },
+        "permission": {
+          "$ref": "#/definitions/v3Permission"
+        }
+      },
+      "title": "插件依赖声明替换的结果。"
     },
     "v3PluginStartDebugReq": {
       "type": "object",

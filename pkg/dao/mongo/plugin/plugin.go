@@ -20,6 +20,8 @@
 package plugin
 
 import (
+	"time"
+
 	"github.com/TencentBlueKing/bk-nodemgr/pkg/contextx"
 	"github.com/TencentBlueKing/bk-nodemgr/pkg/dao/mongo/base"
 	"github.com/TencentBlueKing/bk-nodemgr/pkg/logger"
@@ -83,15 +85,47 @@ func (d *dao) upsertMany(nCtx contextx.IContext, plugins ...*Plugin) error {
 
 func buildUpsertManyParams(plugins []*Plugin) []mongo.WriteModel {
 	models := make([]mongo.WriteModel, 0, len(plugins))
+	now := time.Now()
 	for _, plugin := range plugins {
 		filter := bson.D{
 			bson.E{Key: FieldKeyName, Value: plugin.Name},
 		}
 
-		update := base.BuildUpsertParam(plugin)
+		// Requirements are managed by the dedicated declaration update.
+		update := bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: base.FieldKeyIsDeleted, Value: false},
+				{Key: base.FieldKeyUpdatedAt, Value: now},
+				{Key: "data.tenant_id", Value: plugin.TenantID},
+				{Key: FieldKeyName, Value: plugin.Name},
+				{Key: FieldKeyGroup, Value: plugin.Group},
+				{Key: FieldKeyPkgName, Value: plugin.PkgName},
+				{Key: FieldKeyMemo, Value: plugin.Memo},
+				{Key: FieldKeyVisibleBizIDs, Value: plugin.VisibleBizIDs},
+			}},
+			{Key: "$setOnInsert", Value: bson.D{{Key: base.FieldKeyCreatedAt, Value: now}}},
+		}
 
 		models = append(models, mongo.NewUpdateOneModel().SetFilter(filter).SetUpdate(update).SetUpsert(true))
 	}
 
 	return models
+}
+
+func (d *dao) updateRequirements(nCtx contextx.IContext, pluginName string, requirements []pluginRequirement) error {
+	filter := WithName(pluginName)(base.AliveFilter())
+	update := bson.D{{Key: "$set", Value: bson.D{
+		{Key: FieldKeyRequirements, Value: requirements},
+		{Key: base.FieldKeyUpdatedAt, Value: time.Now()},
+	}}}
+	// Check the match so replacing declarations for a missing plugin fails.
+	result, err := d.client.UpdateOne(nCtx, filter, update)
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return base.ErrRecordNoFound()
+	}
+
+	return nil
 }

@@ -124,6 +124,9 @@ type IDaoPlugin interface {
 	// SetPluginMemo set plugin memo by plugin name.
 	SetPluginMemo(nCtx contextx.IContext, pluginName string, memo string) error
 
+	// SetPluginRequirements replaces the dependency declarations of an existing plugin.
+	SetPluginRequirements(nCtx contextx.IContext, pluginName string, requirements []types.PluginRequirement) error
+
 	// UpsertManyPlugins upsert many plugins.
 	UpsertManyPlugins(nCtx contextx.IContext, plugins ...*types.Plugin) error
 }

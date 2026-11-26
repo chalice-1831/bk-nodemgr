@@ -80,6 +80,7 @@ const (
 	metricOperationExistPluginByPluginName           = "exist_plugin_by_plugin_name"
 	metricOperationExistDefaultPluginByPluginPkgName = "exist_default_plugin_by_plugin_pkg_name"
 	metricOperationSetPluginMemo                     = "set_plugin_memo"
+	metricOperationSetPluginRequirements             = "set_plugin_requirements"
 	metricOperationCreatePlugin                      = "create_plugin"
 	metricOperationEnsureDefaultPlugin               = "ensure_default_plugin"
 	metricOperationUpsertManyPlugins                 = "upsert_many_plugins"
@@ -829,6 +830,13 @@ func (s *Storage) SetPluginMemo(nCtx contextx.IContext, pluginName string, memo 
 	})
 
 	return err
+}
+
+// SetPluginRequirements replaces the dependency declarations of an existing plugin.
+func (s *Storage) SetPluginRequirements(nCtx contextx.IContext, pluginName string, requirements []types.PluginRequirement) error {
+	return s.WrapFn(nCtx, metricOperationSetPluginRequirements, func(nCtx contextx.IContext) error {
+		return s.setPluginRequirements(nCtx, pluginName, requirements)
+	})
 }
 
 // CreatePlugin create plugin.

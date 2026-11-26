@@ -33,4 +33,7 @@ const (
 
 	// FieldKeyVisibleBizIDs the plugin visible biz ids field key.
 	FieldKeyVisibleBizIDs = "data.visible_biz_ids"
+
+	// FieldKeyRequirements is the plugin's declared dependencies.
+	FieldKeyRequirements = "data.requirements"
 )
